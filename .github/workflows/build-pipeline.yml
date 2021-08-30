@@ -1,0 +1,59 @@
+name: Run build pipeline
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./build_pipeline
+        env:
+          SAGEMAKER_PROJECT_NAME: drift-pipeline-4 # ${{ github.event.respository.name }}
+ 
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8" # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: "x64" # optional x64 or x86. Defaults to x64 if not specified
+
+      - name: Setup Node 
+        uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+          architecture: "x64"
+          cache: npm
+                    
+      - name: Install Requirements
+        run: | 
+          npm install -g aws-cdk # Install cdk
+          pip install --requirement requirements.txt
+
+      - name: Configure AWS credentials
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+          role-duration-seconds: 1200
+
+      - name: Build Pipeline
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SAGEMAKER_PIPELINE_NAME: ${{ format('{0}-pipeline', env.SAGEMAKER_PROJECT_NAME) }}
+          SAGEMAKER_PIPELINE_DESCRIPTION: "SageMaker pipeline created from GitHub actions"
+          SAGEMAKER_PIPELINE_ROLE_ARN: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+          ARTIFACT_BUCKET: ${{ secrets.ARTIFACT_BUCKET }}
+        run: |
+          SAGEMAKER_PROJECT_ID=`aws sagemaker describe-project --project-name $SAGEMAKER_PROJECT_NAME --query ProjectId`
+          echo Deploying $SAGEMAKER_PROJECT_NAME ($SAGEMAKER_PROJECT_ID)
+          npx cdk deploy
+          echo Stating pipeline $SAGEMAKER_PIPELINE_NAME
+          aws sagemaker start-pipeline-execution --pipeline-name $SAGEMAKER_PIPELINE_NAME

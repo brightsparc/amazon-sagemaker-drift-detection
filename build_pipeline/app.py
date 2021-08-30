@@ -46,18 +46,13 @@ def main(
     parsed = json.loads(pipeline_definition_body)
     logger.debug(json.dumps(parsed, indent=2, sort_keys=True))
 
-    # Upload the pipeline to S3 bucket/key and return JSON with key/value for for Cfn Stack parameters.
+    # Upload the pipeline to S3 bucket and return the target key
     # see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sagemaker-pipeline.html
-    pipeline_location = upload_pipeline(
+    pipeline_definition_key = upload_pipeline(
         pipeline,
         default_bucket=artifact_bucket,
         base_job_prefix=project_id,
     )
-
-    # Store parameters as template-config.json used in the next CodePipeline step to create the SageMakerPipelineStack.
-    with open(os.path.join(output_dir, "template-config.json"), "w") as f:
-        template_configuration = {"Parameters": pipeline_location}
-        json.dump(template_configuration, f)
 
     # Create App and stacks
     app = core.App()
@@ -73,7 +68,8 @@ def main(
         model_package_group_name=model_package_group_name,
         pipeline_name=sagemaker_pipeline_name,
         pipeline_description=sagemaker_pipeline_description,
-        # pipeline_definition_body=pipeline_definition_body,
+        pipeline_definition_bucket=artifact_bucket,
+        pipeline_definition_key=pipeline_definition_key,
         role_arn=sagemaker_pipeline_role,
         tags=tags,
     )
