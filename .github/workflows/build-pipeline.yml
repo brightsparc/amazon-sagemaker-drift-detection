@@ -1,0 +1,83 @@
+name: Run build pipeline
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    environment:
+      name: development
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./build_pipeline
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Config Environment
+        id: env-name
+        env:
+          PROJECT_NAME: ${{ github.event.repository.name }}
+        run: |
+          echo "Project name: $PROJECT_NAME"
+          echo "::set-output name=project_name::$PROJECT_NAME"
+
+      - name: Setup Python environment
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8" # Version range or exact version of a Python version to use, using SemVer's version range syntax
+          architecture: "x64" # optional x64 or x86. Defaults to x64 if not specified
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: "12"
+          architecture: "x64"
+          cache: npm
+
+      - name: Install Requirements
+        run: |
+          npm install -g aws-cdk # Install cdk
+          pip install --requirement requirements.txt
+
+      - name: Configure AWS Credentials
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          role-to-assume: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+          role-duration-seconds: 1200
+
+      - name: Build Pipeline
+        id: build-pipeline
+        env:
+          SAGEMAKER_PROJECT_NAME: ${{ steps.env-name.outputs.project_name }}
+          SAGEMAKER_PIPELINE_NAME: ${{ steps.env-name.outputs.project_name }}-pipeline
+          SAGEMAKER_PIPELINE_DESCRIPTION: "SageMaker pipeline created from GitHub actions"
+          SAGEMAKER_PIPELINE_ROLE_ARN: ${{ secrets.AWS_SAGEMAKER_ROLE }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+        run: |
+          export SAGEMAKER_PROJECT_ID=`aws sagemaker describe-project --project-name $SAGEMAKER_PROJECT_NAME --query ProjectId --output text`
+          echo "Project id: $SAGEMAKER_PROJECT_ID"
+          export ARTIFACT_BUCKET=sagemaker-project-$SAGEMAKER_PROJECT_ID-$AWS_REGION
+          echo "Artifact Bucket: $ARTIFACT_BUCKET"
+          npx cdk synth > drift-pipeline.yml
+          echo "::set-output name=pipeline_name::$SAGEMAKER_PIPELINE_NAME"
+
+      - name: Print Template
+        run: cat drift-pipeline.yml
+
+      - name: Create CFN Pipeline
+        id: deploy-pipeline
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: sagemaker-${{ steps.build-pipeline.outputs.pipeline_name }}
+          template: ./build_pipeline/drift-pipeline.yml # Need to specify working-directory
+          no-fail-on-empty-changeset: "1"
+
+      - name: Start Pipeline
+        id: start-pipeline
+        run: aws sagemaker start-pipeline-execution --pipeline-name ${{ steps.build-pipeline.outputs.pipeline_name }}

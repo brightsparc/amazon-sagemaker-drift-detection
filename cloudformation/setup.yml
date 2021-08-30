@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Setup IAM user for GitHub Actions and IAM role for SageMaker
+
+Parameters:
+  GitHubActionsUserName:
+    Type: String
+    Default: github-actions-sagemaker-user
+  SageMakerRoleName:
+    Type: String
+    Default: github-actions-sagemaker-role
+
+Resources:
+  GitHubActionsUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: !Ref GitHubActionsUserName
+
+  GitHubActionsUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref GitHubActionsUser
+      Serial: 1
+
+  GitHubActionsCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Ref GitHubActionsUserName
+      SecretString: !Sub |
+        {
+          "AccessKeyId":"${GitHubActionsUserAccessKey}",
+          "SecretAccessKey":"${GitHubActionsUserAccessKey.SecretAccessKey}"
+        }
+
+  # The permissions that the CloudFormation stack deployments will have
+  SageMakerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref SageMakerRoleName
+      MaxSessionDuration: 43200 # 12 hours maximum duration
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - sagemaker.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              AWS: !GetAtt GitHubActionsUser.Arn
+            Action:
+              - "sts:AssumeRole"
+              - "sts:TagSession"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+
+Outputs:
+  SageMakerRoleArn:
+    Value: !GetAtt SageMakerRole.Arn

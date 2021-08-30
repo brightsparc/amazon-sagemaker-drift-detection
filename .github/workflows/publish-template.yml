@@ -9,6 +9,8 @@ on:
 jobs:
   synth-and-publish:
     runs-on: ubuntu-latest
+    environment:
+      name: aws
     defaults:
       run:
         shell: bash
