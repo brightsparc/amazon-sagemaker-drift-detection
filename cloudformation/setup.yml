@@ -31,7 +31,27 @@ Resources:
           "SecretAccessKey":"${GitHubActionsUserAccessKey.SecretAccessKey}"
         }
 
-  # The permissions that the CloudFormation stack deployments will have
+  # Permissions to perform cloudformation and assume pass SageMakerRole for autoscaling
+  GitHubActionsDeployPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - !Ref SageMakerRole
+      PolicyName: allow-github-actions-cloudformation-deploy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "cloudformation:*"
+            Effect: Allow
+            Resource: "*"
+          - Action: "cloudformation:DeleteStack"
+            Effect: Deny
+            Resource: "*"
+          - Action: "iam:PassRole"
+            Effect: Allow
+            Resource: !GetAtt SageMakerRole.Arn
+
   SageMakerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -55,7 +75,6 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
         - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
-        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
 
 Outputs:
   SageMakerRoleArn:

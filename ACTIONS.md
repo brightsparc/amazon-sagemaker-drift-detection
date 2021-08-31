@@ -34,12 +34,19 @@ aws secretsmanager get-secret-value \
   --output text
 ```
 
-Create two GitHub Actions secrets for the access key in your GitHub repository by going to Settings > Secrets.  Alternatively, you can create these GitHub Actions secrets at the GitHub organization level, and grant access to the secrets to your new repository.
+The GitHub Actions workflow has three stages: Model build, Deploy to staging, and Deploy to production.  Each has their on [environment](https://docs.github.com/en/actions/reference/environments) which secrets and optional protection rules. 
+1. `development` This is the environment in which runs your Model Build and starts the SageMaker pipeline execution, and on completion it will publish a model to the Registry.  It is recommend you run this on `pull_request` and `push`.
+1. `staging` This second stage deploys your Staging endpoint.  It is recommend you run this on commit to the `development` branch and configure a *protection rule* to continue after you have approved the model in the SageMaker Model Registry.
+1. `prod` This final stage deploys you Production Endpoint. It is recommend you this on commit the `main` branch with a *protection rule* to require approval after Staging endpoint has been tested.
+
+For each of the environments you will require setting up the following secrets.
 1. Create a secret named `AWS_REGION` defaulted to region `us-east-1`
 1. Create a secret named `AWS_ACCESS_KEY_ID` containing the `AccessKeyId` value returned above.
 1. Create a secret named `AWS_SECRET_ACCESS_KEY` containing in the `SecretAccessKey` value returned above.
 1. Create a secret named `AWS_SAGEMAKER_ROLE` containing the `SageMakerRoleArn` output in the setup stack.
 
-Go to the Actions tab, select the latest workflow run and its failed job, then select "Re-run jobs" > "Re-run all jobs".
+If you configure *protection rules* for you environments, you will need to click **Review deployments** to approve the next stage as show below:
 
-When the workflow successfully completes, expand the "Print service URL" step in the "Deploy web application" job to see the URL for the deployed web application.
+![Execution Role](docs/github-actions-workflow.png)
+
+When the workflow successfully completes, you will have both Endpoints deployed in staging and production, with drift detection enable which will trigger re-training on drift.

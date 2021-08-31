@@ -3,14 +3,12 @@ name: Publish Template to S3
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   synth-and-publish:
     runs-on: ubuntu-latest
     environment:
-      name: aws
+      name: aws # Target only the AWS environment to publish CFN templates
     defaults:
       run:
         shell: bash
@@ -21,8 +19,8 @@ jobs:
       - name: Setup Python environment
         uses: actions/setup-python@v2
         with:
-          python-version: "3.8" # Version range or exact version of a Python version to use, using SemVer's version range syntax
-          architecture: "x64" # optional x64 or x86. Defaults to x64 if not specified
+          python-version: "3.8"
+          architecture: "x64"
 
       - name: Setup Node 
         uses: actions/setup-node@v2
