@@ -47,7 +47,7 @@ jobs:
         env:
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           BUCKET_PREFIX: ${{ secrets.BUCKET_PREFIX }}
-        run: cdk synth drift-service-catalog --path-metadata false -c drift:ArtifactBucket=$BUCKET_NAME -c drift:ArtifactBucketPrefix=$BUCKET_PREFIX > drift-service-catalog.yml
+        run: cdk synth drift-service-catalog --path-metadata false -c drift:ArtifactBucket=$BUCKET_NAME -c drift:ArtifactBucketPrefix=$BUCKET_PREFIX > cloudformation/drift-service-catalog.yml
 
       - name: Publish Assets to S3
         env:
@@ -62,6 +62,6 @@ jobs:
           path: cdk.out/*.template.json
 
       - name: Print Template
-        run: cat drift-service-catalog.yml
+        run: cat cloudformation/drift-service-catalog.yml
 
 

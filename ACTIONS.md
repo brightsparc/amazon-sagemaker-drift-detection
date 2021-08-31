@@ -19,7 +19,7 @@ Clone your new repository, and deploy the IAM resources needed to enable GitHub 
 ```
 aws cloudformation deploy \
   --stack-name amazon-sagemaker-workflow-for-github-actions \
-  --template-file cloudformation/setup.yml \
+  --template-file cloudformation/github-actions-setup.yml \
   --capabilities CAPABILITY_NAMED_IAM \
   --region us-east-1
 ```

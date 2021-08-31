@@ -2,7 +2,7 @@
 # Build Model –> Deploy to staging with approval –> Deploy to prod with approval.
 # https://timheuer.com/blog/add-approval-workflow-to-github-actions/
 
-name: Build and Deploy Drift Pipeline
+name: Build and Deploy
 
 on: [push, pull_request] # Optionally filter on branch
 
