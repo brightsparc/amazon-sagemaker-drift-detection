@@ -4,7 +4,7 @@
 
 name: Build and Deploy Drift Pipeline
 
-on: [push, pull_request] # Optionally filter this on branch
+on: [push, pull_request] # Optionally filter on branch
 
 jobs:
   build:
@@ -69,7 +69,7 @@ jobs:
           echo "Project id: $SAGEMAKER_PROJECT_ID"
           export ARTIFACT_BUCKET=sagemaker-project-$SAGEMAKER_PROJECT_ID-$AWS_REGION
           echo "Artifact Bucket: $ARTIFACT_BUCKET"
-          npx cdk synth --path-metadata false > drift-pipeline.yml
+          npx cdk synth --path-metadata false --asset-metadata=false > drift-pipeline.yml
           echo "::set-output name=pipeline_name::$SAGEMAKER_PIPELINE_NAME"
 
       - name: Print template
@@ -85,7 +85,7 @@ jobs:
 
       - name: Start Pipeline
         id: start-pipeline # TODO: Run python code that waits for pipeline to complete
-        run: aws sagemaker start-pipeline-execution --pipeline-name ${{ steps.build-pipeline.outputs.pipeline_name }}
+        run: aws sagemaker start-pipeline-execution --pipeline-name ${{ steps.build-pipeline.outputs.pipeline_name }} --pipeline-parameters Name=InputSource,Value=GitHubAction#${{ github.run_number }}
 
       - name: Upload template
         uses: actions/upload-artifact@v2
@@ -154,7 +154,7 @@ jobs:
           echo "Project id: $SAGEMAKER_PROJECT_ID"
           export ARTIFACT_BUCKET=sagemaker-project-$SAGEMAKER_PROJECT_ID-$AWS_REGION
           echo "Artifact Bucket: $ARTIFACT_BUCKET"
-          npx cdk synth drift-deploy-staging --path-metadata false > drift-deploy-staging.yml
+          npx cdk synth drift-deploy-staging --path-metadata false --asset-metadata=false > drift-deploy-staging.yml
 
       - name: Print template
         run: cat drift-deploy-staging.yml
@@ -176,7 +176,7 @@ jobs:
   deploy_prod:
     needs: deploy_staging
     name: Deploy to prod
-    # if: ${{ github.ref == 'refs/heads/main' }} # Filter to only run on main branch
+    if: ${{ github.ref == 'refs/heads/main' }} # Filter to only run on main branch
     runs-on: ubuntu-latest
     environment:
       name: prod # Use different environment that requires approval
@@ -235,7 +235,7 @@ jobs:
           echo "Project id: $SAGEMAKER_PROJECT_ID"
           export ARTIFACT_BUCKET=sagemaker-project-$SAGEMAKER_PROJECT_ID-$AWS_REGION
           echo "Artifact Bucket: $ARTIFACT_BUCKET"
-          npx cdk synth drift-deploy-prod --path-metadata false > drift-deploy-prod.yml
+          npx cdk synth drift-deploy-prod --path-metadata false --asset-metadata=false > drift-deploy-prod.yml
 
       - name: Print Template
         run: cat drift-deploy-prod.yml
