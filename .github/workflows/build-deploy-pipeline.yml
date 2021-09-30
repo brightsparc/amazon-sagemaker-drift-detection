@@ -54,7 +54,7 @@ jobs:
         env:
           SAGEMAKER_PROJECT_NAME: ${{ env.PROJECT_NAME }}
           SAGEMAKER_PIPELINE_NAME: ${{ env.PROJECT_NAME }}-build
-          SAGEMAKER_PIPELINE_DESCRIPTION: "SageMaker pipeline created from GitHub actions"
+          SAGEMAKER_PIPELINE_DESCRIPTION: "Drift detection model build pipeline created from GitHub actions"
           SAGEMAKER_PIPELINE_ROLE_ARN: arn:aws:iam::${{ steps.creds.outputs.aws-account-id }}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole
         run: |
           export SAGEMAKER_PROJECT_ID=`aws sagemaker describe-project --project-name $SAGEMAKER_PROJECT_NAME --query ProjectId --output text`
@@ -68,16 +68,14 @@ jobs:
         run: cat drift-pipeline.yml
 
       - name: Create CFN Pipeline
-        id: deploy-pipeline
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
-          name: sagemaker-${{ steps.build-pipeline.outputs.pipeline_name }}
+          name: sagemaker-${{ env.PROJECT_NAME }}-pipeline
           template: ./build_pipeline/drift-pipeline.yml # Need to specify working-directory
           role-arn: arn:aws:iam::${{ steps.creds.outputs.aws-account-id }}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole
           no-fail-on-empty-changeset: "1"
 
       - name: Start Pipeline
-        id: start-pipeline # TODO: Run python code that waits for pipeline to complete
         run: aws sagemaker start-pipeline-execution --pipeline-name ${{ steps.build-pipeline.outputs.pipeline_name }} --pipeline-parameters Name=InputSource,Value=GitHubAction#${{ github.run_number }}
 
       - name: Upload template
@@ -142,10 +140,9 @@ jobs:
         run: cat drift-batch-staging.yml
 
       - name: Deploy Staging
-        id: deploy-pipeline
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
-          name: sagemaker-${{ env.PROJECT_NAME }}-deploy-staging
+          name: sagemaker-${{ env.PROJECT_NAME }}-batch-staging
           template: ./batch_pipeline/drift-batch-staging.yml # Need to specify working-directory
           role-arn: arn:aws:iam::${{ steps.creds.outputs.aws-account-id }}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole
           no-fail-on-empty-changeset: "1"
@@ -213,10 +210,9 @@ jobs:
         run: cat drift-batch-prod.yml
 
       - name: Deploy Prod
-        id: deploy-pipeline
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
-          name: sagemaker-${{ env.PROJECT_NAME }}-deploy-prod
+          name: sagemaker-${{ env.PROJECT_NAME }}-batch-prod
           template: ./batch_pipeline/drift-batch-prod.yml # Need to specify working-directory
           role-arn: arn:aws:iam::${{ steps.creds.outputs.aws-account-id }}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole
           no-fail-on-empty-changeset: "1"
@@ -282,7 +278,6 @@ jobs:
         run: cat drift-deploy-staging.yml
 
       - name: Deploy Staging
-        id: deploy-pipeline
         uses: aws-actions/aws-cloudformation-github-deploy@v1
         with:
           name: sagemaker-${{ env.PROJECT_NAME }}-deploy-staging

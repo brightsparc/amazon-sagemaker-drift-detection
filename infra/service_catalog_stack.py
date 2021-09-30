@@ -149,6 +149,19 @@ class ServiceCatalogStack(core.Stack):
                 )
             )
 
+            # Add permissions to get/create lambda in batch pipeline
+            products_use_role.add_to_principal_policy(
+                iam.PolicyStatement(
+                    actions=[
+                        "lambda:*",
+                    ],
+                    resources=[
+                        f"arn:aws:lambda:{self.region}:{self.account}:function:sagemaker-*"
+                    ],
+                )
+            )
+
+
         portfolio = servicecatalog.Portfolio(
             self,
             "Portfolio",
