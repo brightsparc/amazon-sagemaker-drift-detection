@@ -4,7 +4,7 @@ Description: Setup IAM user for GitHub Actions and IAM role for SageMaker
 Parameters:
   GitHubActionsUserName:
     Type: String
-    Default: github-actions-sagemaker-user
+    Default: github-actions-sagemaker
 
 Resources:
   GitHubActionsUser:

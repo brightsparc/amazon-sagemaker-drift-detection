@@ -295,9 +295,20 @@ class PipelineStack(core.Stack):
             core.CfnDynamicReferenceService.SSM, parameter_name
         ).to_string()
 
+class EmptyPipelineStack(PipelineStack):
+    """Creates an empty stack with Bucket only"""
+
+    def __init__(
+        self,
+        scope: core.Construct,
+        construct_id: str,
+        **kwargs,
+    ) -> None:
+        super().__init__(scope, construct_id, False, False, False, **kwargs)
+
 
 class BatchPipelineStack(PipelineStack):
-    """Creates a Pipelinf for real-time deployment"""
+    """Creates a Pipeline for batch deployment"""
 
     def __init__(
         self,
@@ -309,7 +320,7 @@ class BatchPipelineStack(PipelineStack):
 
 
 class DeployPipelineStack(PipelineStack):
-    """Creates a Pipelinf for real-time deployment"""
+    """Creates a Pipelinfe for real-time deployment"""
 
     def __init__(
         self,
