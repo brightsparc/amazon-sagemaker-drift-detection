@@ -28,13 +28,13 @@ Resources:
           "SecretAccessKey":"${GitHubActionsUserAccessKey.SecretAccessKey}"
         }
 
-  # Permissions to perform cloudformation and assume pass SageMakerRole for autoscaling
+  # Permissions to put sagemaker resources to s3 bucket and run CloudFormation passing SageMaker role
   GitHubActionsDeployPolicy:
     Type: AWS::IAM::Policy
     Properties:
       Users:
         - !Ref GitHubActionsUser
-      PolicyName: allow-github-actions-cloudformation-deploy
+      PolicyName: allow-github-actions
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -44,6 +44,22 @@ Resources:
             Resource: "*"
           - Action: "cloudformation:DeleteStack"
             Effect: Deny
+            Resource: "*"
+          - Action:
+              - "s3:CreateBucket"
+              - "s3:GetBucket*"
+              - "s3:ListAllMyBuckets"
+              - "s3:ListBucket"
+              - "s3:GetObject*"
+              - "s3:PutObject*"
+            Effect: Allow
+            Resource: "arn:aws:s3:::sagemaker-*"
+          - Action:
+              - "sagemaker:Describe*"
+              - "sagemaker:List*"
+              - "sagemaker:Search"
+              - "sagemaker:StartPipelineExecution"
+            Effect: Allow
             Resource: "*"
           - Action: "iam:PassRole"
             Effect: Allow
