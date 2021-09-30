@@ -5,9 +5,6 @@ Parameters:
   GitHubActionsUserName:
     Type: String
     Default: github-actions-sagemaker-user
-  SageMakerRoleName:
-    Type: String
-    Default: github-actions-sagemaker-role
 
 Resources:
   GitHubActionsUser:
@@ -35,8 +32,8 @@ Resources:
   GitHubActionsDeployPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      Roles:
-        - !Ref SageMakerRole
+      Users:
+        - !Ref GitHubActionsUser
       PolicyName: allow-github-actions-cloudformation-deploy
       PolicyDocument:
         Version: "2012-10-17"
@@ -50,32 +47,4 @@ Resources:
             Resource: "*"
           - Action: "iam:PassRole"
             Effect: Allow
-            Resource: !GetAtt SageMakerRole.Arn
-
-  SageMakerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Ref SageMakerRoleName
-      MaxSessionDuration: 43200 # 12 hours maximum duration
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service:
-                - sagemaker.amazonaws.com
-            Action:
-              - "sts:AssumeRole"
-          - Effect: "Allow"
-            Principal:
-              AWS: !GetAtt GitHubActionsUser.Arn
-            Action:
-              - "sts:AssumeRole"
-              - "sts:TagSession"
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
-
-Outputs:
-  SageMakerRoleArn:
-    Value: !GetAtt SageMakerRole.Arn
+            Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole

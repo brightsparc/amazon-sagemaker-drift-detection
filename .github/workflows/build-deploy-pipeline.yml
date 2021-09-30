@@ -2,7 +2,7 @@
 # Build Model –> Deploy to staging with approval –> Deploy to prod with approval.
 # https://timheuer.com/blog/add-approval-workflow-to-github-actions/
 
-name: Build and Deploy
+name: Build and Deploy Pipeline
 
 on: [push, pull_request] # Optionally filter on branch
 
@@ -53,7 +53,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_SAGEMAKER_ROLE }}
           role-duration-seconds: 1200
 
       - name: Build Pipeline
@@ -81,6 +80,7 @@ jobs:
         with:
           name: sagemaker-${{ steps.build-pipeline.outputs.pipeline_name }}
           template: ./build_pipeline/drift-pipeline.yml # Need to specify working-directory
+          role-arn: ${{ secrets.AWS_SAGEMAKER_ROLE }}
           no-fail-on-empty-changeset: "1"
 
       - name: Start Pipeline
@@ -140,7 +140,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_SAGEMAKER_ROLE }}
           role-duration-seconds: 1200
 
       - name: Build Templates
@@ -165,6 +164,7 @@ jobs:
         with:
           name: sagemaker-${{ steps.env-name.outputs.project_name }}-deploy-staging
           template: ./deployment_pipeline/drift-deploy-staging.yml # Need to specify working-directory
+          role-arn: ${{ secrets.AWS_SAGEMAKER_ROLE }}
           no-fail-on-empty-changeset: "1"
 
       - name: Upload template
@@ -221,7 +221,6 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
-          role-to-assume: ${{ secrets.AWS_SAGEMAKER_ROLE }}
           role-duration-seconds: 1200
 
       - name: Build Templates
@@ -246,6 +245,7 @@ jobs:
         with:
           name: sagemaker-${{ steps.env-name.outputs.project_name }}-deploy-prod
           template: ./deployment_pipeline/drift-deploy-prod.yml # Need to specify working-directory
+          role-arn: ${{ secrets.AWS_SAGEMAKER_ROLE }}
           no-fail-on-empty-changeset: "1"
 
       - name: Upload template
