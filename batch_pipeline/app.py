@@ -6,6 +6,7 @@ import os
 
 # Import the pipeline
 from pipelines.pipeline import get_pipeline, upload_pipeline
+from sagemaker.utils import name_from_base
 
 from aws_cdk import core
 from infra.batch_config import BatchConfig
@@ -78,6 +79,31 @@ def create_pipeline(
         baseline_uri = registry.get_processing_output(pipeline_execution_arn)
         logger.info(f"Got baseline uri: {baseline_uri}")
 
+    # Get the pipeline key
+    pipeline_key = f"{name_from_base(project_id)}/pipeline.json"
+
+    tags = [
+        core.CfnTag(key="sagemaker:deployment-stage", value=stage_name),
+        core.CfnTag(key="sagemaker:project-id", value=project_id),
+        core.CfnTag(key="sagemaker:project-name", value=project_name),
+    ]
+
+    evaluate_drift_function_name = f"sagemaker-{project_name}-evaluate-drift"
+
+    infra = SageMakerPipelineStack(
+        app,
+        f"drift-batch-{stage_name}",
+        pipeline_name=sagemaker_pipeline_name,
+        pipeline_description=sagemaker_pipeline_description,
+        pipeline_definition_bucket=artifact_bucket,
+        pipeline_definition_key=pipeline_key,
+        sagemaker_role_arn=sagemaker_pipeline_role_arn,
+        lambda_role_arn=lambda_role_arn,
+        evaluate_drift_function_name=evaluate_drift_function_name,
+        tags=tags,
+        drift_config=batch_config.drift_config,
+    )
+
     # Create batch pipeline
     pipeline = get_pipeline(
         region=region,
@@ -85,7 +111,7 @@ def create_pipeline(
         pipeline_name=sagemaker_pipeline_name,
         default_bucket=artifact_bucket,
         base_job_prefix=project_id,
-        lambda_role_arn=lambda_role_arn,
+        evaluate_drift_function_arn=infra.evaluate_drift_lambda.function_arn,
         data_uri=data_uri,
         model_uri=model_uri,
         transform_uri=transform_uri,
@@ -98,32 +124,9 @@ def create_pipeline(
     parsed = json.loads(pipeline_definition_body)
     logger.info(json.dumps(parsed, indent=2, sort_keys=True))
 
-    # Upload the pipeline to S3 bucket/key and return JSON with key/value for for Cfn Stack parameters.
-    # see: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-sagemaker-pipeline.html
+    # Upload the pipeline to S3 bucket/key
     logger.info(f"Uploading {stage_name} pipeline to {artifact_bucket}")
-    pipeline_definition_key = upload_pipeline(
-        pipeline,
-        default_bucket=artifact_bucket,
-        base_job_prefix=f"{project_id}/batch-{stage_name}",
-    )
-
-    tags = [
-        core.CfnTag(key="sagemaker:deployment-stage", value=stage_name),
-        core.CfnTag(key="sagemaker:project-id", value=project_id),
-        core.CfnTag(key="sagemaker:project-name", value=project_name),
-    ]
-
-    SageMakerPipelineStack(
-        app,
-        f"drift-batch-{stage_name}",
-        pipeline_name=sagemaker_pipeline_name,
-        pipeline_description=sagemaker_pipeline_description,
-        pipeline_definition_bucket=artifact_bucket,
-        pipeline_definition_key=pipeline_definition_key,
-        sagemaker_role_arn=sagemaker_pipeline_role_arn,
-        tags=tags,
-        drift_config=batch_config.drift_config,
-    )
+    upload_pipeline(pipeline, artifact_bucket, pipeline_key)
 
 
 def main(

@@ -295,8 +295,9 @@ class PipelineStack(core.Stack):
             core.CfnDynamicReferenceService.SSM, parameter_name
         ).to_string()
 
-class EmptyPipelineStack(PipelineStack):
-    """Creates an empty stack with Bucket only"""
+
+class ReleasePipelineStack(PipelineStack):
+    """TODO: Create a release pipeline / codebuild job that tags github with a new release"""
 
     def __init__(
         self,
