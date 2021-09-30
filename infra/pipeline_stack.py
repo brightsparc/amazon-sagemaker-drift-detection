@@ -296,18 +296,6 @@ class PipelineStack(core.Stack):
         ).to_string()
 
 
-class ReleasePipelineStack(PipelineStack):
-    """TODO: Create a release pipeline / codebuild job that tags github with a new release"""
-
-    def __init__(
-        self,
-        scope: core.Construct,
-        construct_id: str,
-        **kwargs,
-    ) -> None:
-        super().__init__(scope, construct_id, False, False, False, **kwargs)
-
-
 class BatchPipelineStack(PipelineStack):
     """Creates a Pipeline for batch deployment"""
 

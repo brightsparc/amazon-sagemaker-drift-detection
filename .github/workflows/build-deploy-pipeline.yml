@@ -156,7 +156,7 @@ jobs:
   batch_prod:
     needs: batch_staging
     name: Batch to prod
-    # if: ${{ github.ref == 'refs/heads/main' }} # Filter to only run on main branch
+    if: ${{ github.ref == 'refs/heads/main' }} # Filter to only run on main branch
     runs-on: ubuntu-latest
     environment:
       name: batch-prod
