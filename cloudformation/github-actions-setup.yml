@@ -64,3 +64,17 @@ Resources:
           - Action: "iam:PassRole"
             Effect: Allow
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole
+
+  LambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      Roles:
+        - AmazonSageMakerServiceCatalogProductsUseRole
+      PolicyName: allow-create-lambda-functions
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Action:
+              - "lambda:*"
+            Effect: Allow
+            Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:sagemaker-*"
