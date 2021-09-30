@@ -40,6 +40,7 @@ from sagemaker.workflow.steps import (
     ProcessingStep,
     CacheConfig,
 )
+from sagemaker.utils import name_from_base
 
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -72,7 +73,7 @@ def get_pipeline(
     pipeline_name: str,
     default_bucket: str,
     base_job_prefix: str,
-    evaluate_drift_function_arn: str,
+    lambda_role_arn: str,
     data_uri: str,
     model_uri: str,
     transform_uri: str,
@@ -243,7 +244,12 @@ def get_pipeline(
         # Create an inline lambda step that inspects the output of the model monitoring
         step_lambda = LambdaStep(
             name="EvaluateDrift",
-            lambda_func=Lambda(function_arn=evaluate_drift_function_arn),
+            lambda_func=Lambda(
+                function_name=f"sagemaker-{pipeline_name}",  # Must be <64 characters
+                execution_role_arn=lambda_role_arn,
+                script=os.path.join(BASE_DIR, "../lambda/lambda_evaluate_drift.py"),
+                handler="lambda_evaluate_drift.lambda_handler",
+            ),
             inputs={
                 "ProcessingJobName": step_monitor.properties.ProcessingJobName,
                 "PipelineName": pipeline_name,
@@ -276,8 +282,12 @@ def get_pipeline(
     return pipeline
 
 
-def upload_pipeline(pipeline: Pipeline, default_bucket: str, pipeline_key: str):
+def upload_pipeline(pipeline: Pipeline, default_bucket, base_job_prefix) -> str:
+    # Get the pipeline definition
     pipeline_definition_body = pipeline.definition()
+    # Upload the pipeline to a unique location in s3 based on git commit and timestamp
+    pipeline_key = f"{name_from_base(base_job_prefix)}/pipeline.json"
     S3Uploader.upload_string_as_file_body(
         pipeline_definition_body, f"s3://{default_bucket}/{pipeline_key}"
     )
+    return pipeline_key

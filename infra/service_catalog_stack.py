@@ -161,7 +161,6 @@ class ServiceCatalogStack(core.Stack):
                 )
             )
 
-
         portfolio = servicecatalog.Portfolio(
             self,
             "Portfolio",

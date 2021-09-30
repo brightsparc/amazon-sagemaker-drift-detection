@@ -25,34 +25,11 @@ class SageMakerPipelineStack(core.Stack):
         pipeline_definition_bucket: str,
         pipeline_definition_key: str,
         sagemaker_role_arn: str,
-        lambda_role_arn: str,
-        evaluate_drift_function_name: str,
         tags: list,
         drift_config: DriftConfig,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
-
-        lambda_role = iam.Role.from_role_arn(self, "LambdaRole", role_arn=lambda_role_arn)
-
-        with open("lambda/lambda_evaluate_drift.py", encoding="utf8") as fp:
-            lambda_evaluate_drift_code = fp.read()
-
-        # Return return the lambda function, so we can get the function arn
-        self.evaluate_drift_lambda = lambda_.Function(
-            self,
-            "EvaluateDriftFunction",
-            function_name=evaluate_drift_function_name,
-            code=lambda_.Code.from_inline(lambda_evaluate_drift_code),
-            role=lambda_role,
-            handler="index.lambda_handler",
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            timeout=core.Duration.seconds(3),
-            memory_size=128,
-            environment={
-                "LOG_LEVEL": "INFO",
-            },
-        )
 
         sagemaker.CfnPipeline(
             self,

@@ -64,17 +64,21 @@ Resources:
           - Action: "iam:PassRole"
             Effect: Allow
             Resource: !Sub arn:aws:iam::${AWS::AccountId}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole
+          - Action:
+              - "lambda:*"
+            Effect: Allow
+            Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:sagemaker-*"
 
   LambdaPolicy:
     Type: AWS::IAM::Policy
     Properties:
       Roles:
         - AmazonSageMakerServiceCatalogProductsUseRole
-      PolicyName: allow-create-lambda-functions
+      PolicyName: allow-cloudwatch-alarms
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Action:
-              - "lambda:*"
+              - "cloudwatch:*"
             Effect: Allow
-            Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:sagemaker-*"
+            Resource: !Sub "arn:aws:cloudwatch:${AWS::Region}:${AWS::AccountId}:alarm:sagemaker-*"
