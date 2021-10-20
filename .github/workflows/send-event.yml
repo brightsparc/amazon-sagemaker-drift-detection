@@ -1,0 +1,18 @@
+name: Send Event
+
+on:
+  push:
+    branches:
+      # TEMP: Run on push to this branch
+      - split-workflow
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repository Dispatch
+        uses: peter-evans/repository-dispatch@v1
+        with:
+          token: ${{ secrets.REPO_ACCESS_TOKEN }}
+          repository: brightsparc/amazon-sagemaker-drift-detection
+          event-type: build
