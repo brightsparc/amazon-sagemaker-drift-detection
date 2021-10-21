@@ -5,15 +5,14 @@ name: Build Model
 on:
   push:
     branches:
-      - split-workflow
-  # pull_request:
-  #   branches:
-  #     - main
-  # schedule:
-  #   - cron: '0 12 1 * * *'
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    # * is a special character in YAML so you have to quote this string
+    - cron:  '0 0 1 * *'
   workflow_dispatch:
-  repository_dispatch:
-    types: [build] # Does this need to make the job name?
 
 env:
   AWS_REGION: us-east-1
