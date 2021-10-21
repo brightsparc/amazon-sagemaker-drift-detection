@@ -10,9 +10,10 @@ on:
     branches:
       - main
   schedule:
-    # * is a special character in YAML so you have to quote this string
-    - cron:  '0 0 1 * *'
+    - cron: '0 0 1 * *' # Runs on midnight on first day of every month
   workflow_dispatch:
+  repository_dispatch:
+    types: [build]
 
 env:
   AWS_REGION: us-east-1
