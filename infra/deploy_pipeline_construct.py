@@ -230,9 +230,7 @@ class DeployPipelineConstruct(core.Construct):
         events.Rule(
             self,
             "ModelRegistryRule",
-            rule_name="sagemaker-{}-modelregistry-{}".format(
-                project_name, construct_id
-            ),
+            rule_name=f"sagemaker-{project_name}-registry-{construct_id}",
             description="Rule to trigger a deployment when SageMaker Model registry is updated with a new model package.",
             event_pattern=events.EventPattern(
                 source=["aws.sagemaker"],
@@ -255,7 +253,7 @@ class DeployPipelineConstruct(core.Construct):
         events.Rule(
             self,
             "CodeCommitRule",
-            rule_name="sagemaker-{}-codecommit-{}".format(project_name, construct_id),
+            rule_name=f"sagemaker-{project_name}-codecommit-{construct_id}",
             description="Rule to trigger a deployment when configuration is updated in CodeCommit.",
             event_pattern=events.EventPattern(
                 source=["aws.codecommit"],

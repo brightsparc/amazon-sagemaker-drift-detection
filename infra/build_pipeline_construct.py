@@ -335,7 +335,7 @@ class BuildPipelineConstruct(core.Construct):
         events.Rule(
             self,
             "SagemakerPipelineRule",
-            rule_name=f"sagemaker-{project_name}-sagemakerpipeline-{construct_id}",
+            rule_name=f"sagemaker-{project_name}-model-{construct_id}",
             description="Rule to enable/disable SM pipeline triggers when a SageMaker Model Building Pipeline is in progress.",
             event_pattern=events.EventPattern(
                 source=["aws.sagemaker"],

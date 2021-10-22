@@ -57,3 +57,39 @@ For each of the environments you will require setting up the following secrets.
 1. Create a secret named `AWS_SAGEMAKER_ROLE` containing the ARN for the `AmazonSageMakerServiceCatalogProductsUseRole` in your account.
 
 When the workflow successfully completes, drift detection is configured to trigger re-training on drift detection in the production batch pipeline or real-time endpoint.
+
+### GitHub Dispatch Events
+
+Create a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) for your GitHub users with `repo` scope and `actions:write` permissions to enable you to send a [workflow dispatch](https://docs.github.com/en/rest/reference/actions#create-a-workflow-dispatch-event) event.
+
+## Testing
+
+You can test the pipeline with a github repository that has the same name as your SageMaker Project.
+
+Export the environment variables for the `SAGEMAKER_PROJECT_NAME` and `SAGEMAKER_PROJECT_ID` created by your SageMaker Project cloud formation.
+
+Also pass the `GITHUB_USER` and `GITHUB_TOKEN` from the personal access token created above.
+
+Then run the `python` command:
+
+```
+export SAGEMAKER_PROJECT_NAME=<<existing-project-name>>
+export SAGEMAKER_PROJECT_ID=<<existing-project-id>>
+export GITHUB_USER=<<your-github-username>>
+export GITHUB_TOKEN=<<your-personal-token>>
+cdk deploy github-actions -c drift:ProductsUseRoleName="" \
+    --parameters SageMakerProjectName=$SAGEMAKER_PROJECT_NAME \
+    --parameters SageMakerProjectId=$SAGEMAKER_PROJECT_ID \
+    --parameters GitHubUser=$GITHUB_USER \
+    --parameters GitHubToken=$GITHUB_TOKEN
+```
+
+You can verify your secret for your GitHub action has been created by getting its value
+
+```
+aws secretsmanager get-secret-value \
+  --secret-id "sagemaker-<<existing-project-id>>-github-action" \
+  --region us-east-1 \
+  --query SecretString \
+  --output text
+```

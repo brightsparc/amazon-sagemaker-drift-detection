@@ -4,7 +4,9 @@ import logging
 
 from aws_cdk import core
 from infra.pipeline_stack import BatchPipelineStack, DeployPipelineStack
+from infra.github_actions_pipeline_stack import GitHubActionsPipelineStack
 from infra.service_catalog_stack import ServiceCatalogStack
+from infra.github_actions_service_catalog_stack import GitHubActionsServiceCatalogStack
 
 # Configure the logger
 logger = logging.getLogger(__name__)
@@ -39,13 +41,37 @@ DeployPipelineStack(
     ),
 )
 
-# Create the SC stack
-synth = core.DefaultStackSynthesizer(
-    file_assets_bucket_name=artifact_bucket,
-    generate_bootstrap_version_rule=False,
-    bucket_prefix=artifact_bucket_prefix,
+# Create the github actions pipeline
+GitHubActionsPipelineStack(
+    app,
+    "github-actions-pipeline",
+    synthesizer=core.DefaultStackSynthesizer(
+        file_assets_bucket_name=artifact_bucket,
+        bucket_prefix=artifact_bucket_prefix,
+        generate_bootstrap_version_rule=False,
+    ),
 )
 
-ServiceCatalogStack(app, "drift-service-catalog", synthesizer=synth)
+# Create the SC stack
+ServiceCatalogStack(
+    app,
+    "drift-service-catalog",
+    synthesizer=core.DefaultStackSynthesizer(
+        file_assets_bucket_name=artifact_bucket,
+        generate_bootstrap_version_rule=False,
+        bucket_prefix=artifact_bucket_prefix,
+    ),
+)
+
+# Create the GitHub actions SC stack
+GitHubActionsServiceCatalogStack(
+    app,
+    "github-actions-service-catalog",
+    synthesizer=core.DefaultStackSynthesizer(
+        file_assets_bucket_name=artifact_bucket,
+        generate_bootstrap_version_rule=False,
+        bucket_prefix=artifact_bucket_prefix,
+    ),
+)
 
 app.synth()

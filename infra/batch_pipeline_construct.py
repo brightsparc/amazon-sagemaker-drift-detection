@@ -289,7 +289,7 @@ class BatchPipelineConstruct(core.Construct):
         events.Rule(
             self,
             "SagemakerPipelineRule",
-            rule_name=f"sagemaker-{project_name}-sagemakerpipeline-{construct_id}",
+            rule_name=f"sagemaker-{project_name}-model-{construct_id}",
             description="Rule to enable/disable SM pipeline triggers when a SageMaker Batch Pipeline is in progress.",
             event_pattern=events.EventPattern(
                 source=["aws.sagemaker"],
@@ -321,9 +321,7 @@ class BatchPipelineConstruct(core.Construct):
         events.Rule(
             self,
             "ModelRegistryRule",
-            rule_name="sagemaker-{}-modelregistry-{}".format(
-                project_name, construct_id
-            ),
+            rule_name=f"sagemaker-{project_name}-registry-{construct_id}",
             description="Rule to trigger a deployment when SageMaker Model registry is updated with a new model package.",
             event_pattern=events.EventPattern(
                 source=["aws.sagemaker"],
