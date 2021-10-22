@@ -77,6 +77,18 @@ class GitHubActionsServiceCatalogStack(core.Stack):
             role_arn=f"arn:{self.partition}:iam::{self.account}:role/{products_launch_role_name}",
         )
 
+        # Create sagemaker secret in github actions pipeline
+        products_launch_role.add_to_principal_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "secretsmanager:CreateSecret",
+                ],
+                resources=[
+                    f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:sagemaker-*"
+                ],
+            )
+        )
+
         # Create an IAM User with access key
         github_user = iam.User(self, "GitHubUser", user_name=iam_user_name)
         github_access_key = iam.CfnAccessKey(
@@ -206,18 +218,6 @@ class GitHubActionsServiceCatalogStack(core.Stack):
 
             # Add permissions to get/create lambda in batch pipeline
             products_use_role.add_to_principal_policy(lambda_policy)
-
-            # Create sagemaker secret in github actions pipeline
-            products_use_role.add_to_principal_policy(
-                iam.PolicyStatement(
-                    actions=[
-                        "secretsmanager:CreateSecret",
-                    ],
-                    resources=[
-                        f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:sagemaker-*"
-                    ],
-                )
-            )
 
             # Allow github user to pass role to product use role
             github_user.add_to_principal_policy(

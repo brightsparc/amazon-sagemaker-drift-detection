@@ -1,6 +1,6 @@
 # Model Building Pipeline
 
-name: Build Model
+name: Build Model Pipeline
 
 on:
   push:
