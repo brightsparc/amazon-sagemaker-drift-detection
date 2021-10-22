@@ -319,6 +319,11 @@ def get_pipeline(
         cache_config=cache_config,
     )
 
+    # get the baseline monitoring output uri
+    baseline_uri = step_baseline.properties.ProcessingOutputConfig.Outputs[
+        "monitoring_output"
+    ]
+
     # register model step that will be conditionally executed
     model_metrics = ModelMetrics(
         model_statistics=MetricsSource(
@@ -328,8 +333,11 @@ def get_pipeline(
                 ]
             ),
             content_type="application/json",
-        )
+        ),
+        model_data_constraints=baseline_uri + "/constraints.json",
+        model_data_statistics=baseline_uri + "/statistics.json",
     )
+
     step_register = RegisterModel(
         name="RegisterModel",
         estimator=xgb_train,
