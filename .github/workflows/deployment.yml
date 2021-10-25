@@ -2,7 +2,7 @@
 # Build Model –> Deploy to staging with approval –> Deploy to prod with approval.
 # https://timheuer.com/blog/add-approval-workflow-to-github-actions/
 
-name: Real-time Deployment
+name: Endpoint Deployment
 
 on:
   # Trigger the workflow on push or pull request,

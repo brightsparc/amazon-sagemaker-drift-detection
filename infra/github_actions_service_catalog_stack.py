@@ -73,7 +73,7 @@ class GitHubActionsServiceCatalogStack(core.Stack):
         )
         products_launch_role = iam.Role.from_role_arn(
             self,
-            "LaunchRole",
+            "GitHubLaunchRole",
             role_arn=f"arn:{self.partition}:iam::{self.account}:role/{products_launch_role_name}",
         )
 
@@ -82,6 +82,7 @@ class GitHubActionsServiceCatalogStack(core.Stack):
             iam.PolicyStatement(
                 actions=[
                     "secretsmanager:CreateSecret",
+                    "secretsmanager:TagResource",
                 ],
                 resources=[
                     f"arn:aws:secretsmanager:{self.region}:{self.account}:secret:sagemaker-*"
@@ -158,7 +159,7 @@ class GitHubActionsServiceCatalogStack(core.Stack):
         if products_use_role_name:
             products_use_role = iam.Role.from_role_arn(
                 self,
-                "ProductsUseRole",
+                "GitHubProductsUseRole",
                 f"arn:{self.partition}:iam::{self.account}:role/{products_use_role_name}",
             )
 
@@ -206,16 +207,6 @@ class GitHubActionsServiceCatalogStack(core.Stack):
                 )
             )
 
-            # # Add permissions to allow adding auto scaling for production deployment
-            # products_use_role.add_to_principal_policy(
-            #     iam.PolicyStatement(
-            #         actions=[
-            #             "cloudwatch:*",
-            #         ],
-            #         resources=[f"arn:aws:cloudwatch:{self.region}:{self.account}:alarm:sagemaker-*"],
-            #     )
-            # )
-
             # Add permissions to get/create lambda in batch pipeline
             products_use_role.add_to_principal_policy(lambda_policy)
 
@@ -234,7 +225,7 @@ class GitHubActionsServiceCatalogStack(core.Stack):
             "Portfolio",
             display_name=portfolio_name.value_as_string,
             provider_name=portfolio_owner.value_as_string,
-            description="Organization templates for github axtions pipeline",
+            description="Organization templates for github actions pipeline",
         )
 
         product = servicecatalog.CloudFormationProduct(
